@@ -37,7 +37,7 @@ desktop.ini
 # Logs & Output
 *.log
 logs/
-output/*.json
+output/reports/*.json
 
 # spaCy models (large, re-downloadable)
 en_core_web_sm/
