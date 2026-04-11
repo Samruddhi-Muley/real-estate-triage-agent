@@ -34,10 +34,13 @@ build/
 Thumbs.db
 desktop.ini
 
-# Logs & Output
+# Logs
 *.log
 logs/
+
+# Generated triage report files (contain PII — names, phones, property IDs)
 output/reports/*.json
+!output/reports/.gitkeep
 
 # spaCy models (large, re-downloadable)
 en_core_web_sm/
