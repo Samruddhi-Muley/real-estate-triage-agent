@@ -50,7 +50,13 @@ Write a professional, empathetic draft response. Follow these tone guidelines:
 - booking → confirm the request and mention a follow-up
 
 Keep the response concise (3–5 sentences). Address the customer by name if available.
-Do NOT include a subject line. Just write the message body.
+
+End the response with:
+"Best regards,
+Real Estate Support Team"
+
+Do NOT use placeholders like [Your Name].
+Do NOT invent names.
 """
 
     response = llm.invoke(prompt)

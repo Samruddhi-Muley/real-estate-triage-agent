@@ -1,0 +1,41 @@
+{
+  "triage_report": {
+    "metadata": {
+      "timestamp": "2026-04-11 15:00:09",
+      "report_id": "TRG-20260411150009",
+      "status": "pending_review"
+    },
+    "input": {
+      "original_message": "I'd like to schedule a property viewing for Unit B-12 in Powai on 20th April at 11am. Please confirm. - Rahul Mehta, 9123456780",
+      "message_length": 127
+    },
+    "classification": {
+      "urgency": "low",
+      "intent": "booking"
+    },
+    "entities": {
+      "property_ids": [
+        "Unit B-12"
+      ],
+      "names": [
+        "Rahul Mehta"
+      ],
+      "dates": [
+        "20th April",
+        "11am"
+      ],
+      "phone_numbers": [
+        "9123456780"
+      ],
+      "locations": [
+        "Powai"
+      ],
+      "amounts": []
+    },
+    "routing": {
+      "assigned_to": "\ud83d\udfe2 Assign \u2192 Scheduling Team",
+      "sla": "Response within 72 hours"
+    },
+    "draft_response": "Dear Mr. Mehta,\n\nWe appreciate your interest in Unit B-12 in Powai and are happy to assist you with scheduling a property viewing. We have noted your request for a viewing on 20th April at 11am and will confirm the availability of the unit shortly. Our team will be in touch with you within the next 24 hours to finalize the arrangements. If there's any additional information required from your end, we will reach out to you on the provided contact number.\n\nBest regards,\nReal Estate Support Team"
+  }
+}

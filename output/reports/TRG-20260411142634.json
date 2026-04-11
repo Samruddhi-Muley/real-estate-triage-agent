@@ -1,0 +1,41 @@
+{
+  "triage_report": {
+    "metadata": {
+      "timestamp": "2026-04-11 14:26:34",
+      "report_id": "TRG-20260411142634",
+      "status": "pending_review"
+    },
+    "input": {
+      "original_message": "I'd like to schedule a property viewing for Unit B-12 in Powai on 20th April at 11am. Please confirm. - Rahul Mehta, 9123456780",
+      "message_length": 127
+    },
+    "classification": {
+      "urgency": "low",
+      "intent": "booking"
+    },
+    "entities": {
+      "property_ids": [
+        "Unit B-12"
+      ],
+      "names": [
+        "Rahul Mehta"
+      ],
+      "dates": [
+        "20th April",
+        "11am"
+      ],
+      "phone_numbers": [
+        "9123456780"
+      ],
+      "locations": [
+        "Powai"
+      ],
+      "amounts": []
+    },
+    "routing": {
+      "assigned_to": "\ud83d\udfe2 Assign \u2192 Scheduling Team",
+      "sla": "Response within 72 hours"
+    },
+    "draft_response": "Dear Mr. Mehta, \n\nWe have received your request to schedule a property viewing for Unit B-12 in Powai on 20th April at 11am. We are pleased to confirm that we have noted your request and will make the necessary arrangements. One of our representatives will be in touch with you shortly to reconfirm the details and provide any additional information you may need. If you have any further questions or concerns, please do not hesitate to contact us at your convenience.\n\nBest regards, \n[Your Name]"
+  }
+}
