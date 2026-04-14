@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Real Estate Triage Agent</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Header -->
+    <header>
+      <div class="logo">🏢</div>
+      <h1>Real Estate <span>Triage Agent</span></h1>
+      <p class="subtitle">AI-powered support message classifier & responder</p>
+    </header>
+
+    <!-- Input Panel -->
+    <section class="input-panel">
+      <label for="messageInput">Paste incoming support message</label>
+      <textarea
+        id="messageInput"
+        rows="5"
+        placeholder="e.g. Hi, I'm Priya Sharma. The ceiling in flat APT-2047 is leaking badly..."
+      ></textarea>
+      <div class="button-row">
+        <button id="submitBtn" onclick="runTriage()">
+          <span id="btnText">Run Triage</span>
+          <span id="btnSpinner" class="spinner hidden"></span>
+        </button>
+        <button class="clear-btn" onclick="clearAll()">Clear</button>
+      </div>
+    </section>
+
+    <!-- Error Box -->
+    <div id="errorBox" class="error-box hidden"></div>
+
+    <!-- Report Panel -->
+    <section id="reportPanel" class="report-panel hidden">
+
+      <div class="report-header">
+        <h2>📋 Triage Report</h2>
+        <div class="meta-row">
+          <span id="reportId" class="badge badge-id"></span>
+          <span id="reportTime" class="badge badge-time"></span>
+        </div>
+      </div>
+
+      <!-- Classification -->
+      <div class="card">
+        <h3>🏷️ Classification</h3>
+        <div class="tag-row">
+          <span id="urgencyTag" class="tag"></span>
+          <span id="intentTag" class="tag"></span>
+        </div>
+      </div>
+
+      <!-- Entities -->
+      <div class="card">
+        <h3>🔍 Extracted Entities</h3>
+        <table id="entityTable">
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Routing & SLA -->
+      <div class="card">
+        <h3>📡 Routing & SLA</h3>
+        <p id="routingText" class="routing-text"></p>
+        <p id="slaText" class="sla-text"></p>
+      </div>
+
+      <!-- Draft Response -->
+      <div class="card">
+        <h3>✉️ Draft Response</h3>
+        <div id="draftResponse" class="draft-box"></div>
+        <button class="copy-btn" onclick="copyDraft()">📋 Copy Draft</button>
+      </div>
+
+    </section>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
