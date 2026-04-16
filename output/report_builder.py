@@ -148,13 +148,18 @@ def print_report(report: dict):
     print("\n" + "═" * 60)
 
 
-# ─────────────────────────────────────────
-# 4. JSON SAVER
-# ─────────────────────────────────────────
-
 def save_report(report: dict, filename: str = None):
-    """Saves the triage report as a JSON file in /output."""
-    import os
+    """
+    Saves report to BOTH:
+    - SQLite database (primary)
+    - JSON file in output/reports/ (backup)
+    """
+    # ── Save to database ──
+    from database.db_manager import save_report_to_db
+    save_report_to_db(report)
+
+    # ── Save JSON backup ──
+    import os, json
     os.makedirs("output/reports", exist_ok=True)
 
     if not filename:
@@ -164,5 +169,5 @@ def save_report(report: dict, filename: str = None):
     with open(filename, "w") as f:
         json.dump(report, f, indent=2)
 
-    print(f"\n💾 Report saved → {filename}")
+    print(f"\n💾 Report saved → Database + {filename}")
     return filename

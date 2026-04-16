@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Triage Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Header -->
+    <header>
+      <div class="logo">📊</div>
+      <h1>Triage <span>Dashboard</span></h1>
+      <p class="subtitle">All incoming support reports — filter, review, resolve</p>
+      <a href="index.html" class="nav-link">← Back to Triage Agent</a>
+    </header>
+
+    <!-- Stats Row -->
+    <section class="stats-row" id="statsRow">
+      <div class="stat-card" id="statTotal">
+        <span class="stat-number">—</span>
+        <span class="stat-label">Total Reports</span>
+      </div>
+      <div class="stat-card urgent">
+        <span class="stat-number" id="statUrgent">—</span>
+        <span class="stat-label">Urgent</span>
+      </div>
+      <div class="stat-card medium">
+        <span class="stat-number" id="statMedium">—</span>
+        <span class="stat-label">Medium</span>
+      </div>
+      <div class="stat-card low">
+        <span class="stat-number" id="statLow">—</span>
+        <span class="stat-label">Low</span>
+      </div>
+      <div class="stat-card pending">
+        <span class="stat-number" id="statPending">—</span>
+        <span class="stat-label">Pending Review</span>
+      </div>
+      <div class="stat-card resolved">
+        <span class="stat-number" id="statResolved">—</span>
+        <span class="stat-label">Resolved</span>
+      </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="filters-bar">
+      <div class="filter-group">
+        <label>Urgency</label>
+        <select id="filterUrgency" onchange="applyFilters()">
+          <option value="">All</option>
+          <option value="urgent">🔴 Urgent</option>
+          <option value="medium">🟠 Medium</option>
+          <option value="low">🟢 Low</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Intent</label>
+        <select id="filterIntent" onchange="applyFilters()">
+          <option value="">All</option>
+          <option value="complaint">😤 Complaint</option>
+          <option value="query">❓ Query</option>
+          <option value="booking">📅 Booking</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Status</label>
+        <select id="filterStatus" onchange="applyFilters()">
+          <option value="">All</option>
+          <option value="pending_review">🕐 Pending Review</option>
+          <option value="escalated">🔺 Escalated</option>
+          <option value="resolved">✅ Resolved</option>
+        </select>
+      </div>
+      <button class="clear-btn" onclick="clearFilters()">Clear Filters</button>
+      <button id="refreshBtn" onclick="loadDashboard()">🔄 Refresh</button>
+    </section>
+
+    <!-- Report Count -->
+    <div class="results-count" id="resultsCount"></div>
+
+    <!-- Error Box -->
+    <div id="errorBox" class="error-box hidden"></div>
+
+    <!-- Reports Table -->
+    <section class="table-wrapper">
+      <table id="reportsTable">
+        <thead>
+          <tr>
+            <th>Report ID</th>
+            <th>Timestamp</th>
+            <th>Urgency</th>
+            <th>Intent</th>
+            <th>Preview</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="reportsBody">
+          <tr>
+            <td colspan="7" class="loading-row">Loading reports...</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Detail Modal -->
+    <div id="modalOverlay" class="modal-overlay hidden" onclick="closeModal(event)">
+      <div class="modal">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+
+        <div class="modal-header">
+          <h2>📋 Report Detail</h2>
+          <div class="meta-row">
+            <span id="modalReportId"  class="badge badge-id"></span>
+            <span id="modalTimestamp" class="badge badge-time"></span>
+          </div>
+        </div>
+
+        <div class="modal-body">
+
+          <!-- Message -->
+          <div class="card">
+            <h3>📨 Original Message</h3>
+            <p id="modalMessage" class="modal-message"></p>
+          </div>
+
+          <!-- Classification -->
+          <div class="card">
+            <h3>🏷️ Classification</h3>
+            <div class="tag-row">
+              <span id="modalUrgency" class="tag"></span>
+              <span id="modalIntent"  class="tag"></span>
+            </div>
+          </div>
+
+          <!-- Entities -->
+          <div class="card">
+            <h3>🔍 Extracted Entities</h3>
+            <table id="modalEntityTable">
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <!-- Routing -->
+          <div class="card">
+            <h3>📡 Routing & SLA</h3>
+            <p id="modalRouting" class="routing-text"></p>
+            <p id="modalSla"     class="sla-text"></p>
+          </div>
+
+          <!-- Draft -->
+          <div class="card">
+            <h3>✉️ Draft Response</h3>
+            <div id="modalDraft" class="draft-box"></div>
+            <button class="copy-btn" onclick="copyModalDraft()">
+              📋 Copy Draft
+            </button>
+          </div>
+
+          <!-- Status Update -->
+          <div class="card status-card">
+            <h3>🔄 Update Status</h3>
+            <div class="status-row">
+              <select id="modalStatusSelect">
+                <option value="pending_review">🕐 Pending Review</option>
+                <option value="escalated">🔺 Escalated</option>
+                <option value="resolved">✅ Resolved</option>
+              </select>
+              <button class="update-btn" onclick="updateStatus()">
+                Update
+              </button>
+            </div>
+            <p id="statusUpdateMsg" class="status-update-msg hidden"></p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
