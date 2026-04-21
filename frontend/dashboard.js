@@ -1,11 +1,18 @@
 const API = "http://127.0.0.1:5000";
-let currentReportId = null;
+
+// Active filters state
+const filters = { urgency: "", intent: "", status: "" };
+let currentReportId  = null;
+let selectedStatus   = null;
 
 // ── Boot ──
 document.addEventListener("DOMContentLoaded", loadDashboard);
 
 async function loadDashboard() {
+  const icon = document.getElementById("refreshIcon");
+  if (icon) { icon.style.display = "inline-block"; icon.style.animation = "spin 0.6s linear infinite"; }
   await Promise.all([loadStats(), loadReports()]);
+  if (icon) { icon.style.animation = "none"; }
 }
 
 // ─────────────────────────────────────────
@@ -17,48 +24,47 @@ async function loadStats() {
     const res  = await fetch(`${API}/stats`);
     const data = await res.json();
 
-    document.querySelector("#statTotal .stat-number").textContent =
-      data.total_reports || 0;
-    document.getElementById("statUrgent").textContent  =
-      data.by_urgency?.urgent  || 0;
-    document.getElementById("statMedium").textContent  =
-      data.by_urgency?.medium  || 0;
-    document.getElementById("statLow").textContent     =
-      data.by_urgency?.low     || 0;
-    document.getElementById("statPending").textContent =
-      data.by_status?.pending_review || 0;
-    document.getElementById("statResolved").textContent =
-      data.by_status?.resolved || 0;
-
+    document.getElementById("statTotal").textContent    = data.total_reports    || 0;
+    document.getElementById("statUrgent").textContent   = data.by_urgency?.urgent  || 0;
+    document.getElementById("statMedium").textContent   = data.by_urgency?.medium  || 0;
+    document.getElementById("statLow").textContent      = data.by_urgency?.low     || 0;
+    document.getElementById("statPending").textContent  = data.by_status?.pending_review || 0;
+    document.getElementById("statEscalated").textContent = data.by_status?.escalated || 0;
+    document.getElementById("statResolved").textContent = data.by_status?.resolved || 0;
   } catch {
-    console.error("Could not load stats");
+    console.error("Stats load failed");
   }
 }
 
 // ─────────────────────────────────────────
-// LOAD REPORTS TABLE
+// LOAD TABLE
 // ─────────────────────────────────────────
 
-async function loadReports(urgency = "", intent = "", status = "") {
+async function loadReports() {
   const tbody = document.getElementById("reportsBody");
-  tbody.innerHTML = `<tr><td colspan="7" class="loading-row">Loading...</td></tr>`;
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="7" class="empty-row">
+        <span class="loading-spinner"></span> Loading...
+      </td>
+    </tr>`;
 
   try {
     const params = new URLSearchParams();
-    if (urgency) params.append("urgency", urgency);
-    if (intent)  params.append("intent",  intent);
-    if (status)  params.append("status",  status);
+    if (filters.urgency) params.append("urgency", filters.urgency);
+    if (filters.intent)  params.append("intent",  filters.intent);
+    if (filters.status)  params.append("status",  filters.status);
 
     const res  = await fetch(`${API}/reports?${params.toString()}`);
     const data = await res.json();
 
     document.getElementById("resultsCount").textContent =
-      `Showing ${data.count} report${data.count !== 1 ? "s" : ""}`;
+      `${data.count} report${data.count !== 1 ? "s" : ""}`;
 
     if (data.count === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="7" class="loading-row">No reports found.</td>
+          <td colspan="7" class="empty-row">No reports match the current filters.</td>
         </tr>`;
       return;
     }
@@ -66,81 +72,78 @@ async function loadReports(urgency = "", intent = "", status = "") {
     tbody.innerHTML = "";
     data.reports.forEach(item => {
       const r  = item.triage_report;
+      const id = r.metadata.report_id;
       const tr = document.createElement("tr");
-      tr.onclick = () => openModal(r.metadata.report_id);
+      tr.onclick = () => openModal(id);
+
       tr.innerHTML = `
-        <td>${r.metadata.report_id}</td>
-        <td>${r.metadata.timestamp}</td>
+        <td>${id}</td>
+        <td style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted)">
+          ${r.metadata.timestamp}
+        </td>
         <td>
-          <span class="tag tag-${r.classification.urgency}">
-            ${urgencyEmoji(r.classification.urgency)}
-            ${r.classification.urgency.toUpperCase()}
+          <span class="urgency-tag u-${r.classification.urgency}" style="font-size:0.82rem">
+            ${urgencyEmoji(r.classification.urgency)} ${r.classification.urgency.toUpperCase()}
           </span>
         </td>
         <td>
-          <span class="tag tag-${r.classification.intent}">
-            ${intentEmoji(r.classification.intent)}
-            ${r.classification.intent.toUpperCase()}
+          <span class="intent-tag i-${r.classification.intent}" style="font-size:0.82rem">
+            ${intentEmoji(r.classification.intent)} ${r.classification.intent.toUpperCase()}
           </span>
         </td>
+        <td class="preview-cell">${r.input.original_message}</td>
         <td>
-          <span class="preview-text">
-            ${r.input.original_message}
-          </span>
-        </td>
-        <td>
-          <span class="status-badge status-${r.metadata.status.replace("_review", "")}">
+          <span class="status-badge ${statusClass(r.metadata.status)}">
             ${statusLabel(r.metadata.status)}
           </span>
         </td>
         <td>
-          <button class="view-btn"
-            onclick="event.stopPropagation(); openModal('${r.metadata.report_id}')">
-            View
+          <button class="view-btn" onclick="event.stopPropagation();openModal('${id}')">
+            View →
           </button>
         </td>
       `;
       tbody.appendChild(tr);
     });
 
+    document.getElementById("errorBox").classList.add("hidden");
+
   } catch {
     document.getElementById("errorBox").textContent =
-      "⚠️ Could not connect to server. Is Flask running?";
+      "⚠  Could not connect to server. Is Flask running on port 5000?";
     document.getElementById("errorBox").classList.remove("hidden");
   }
 }
 
 // ─────────────────────────────────────────
-// FILTERS
+// FILTERS (pill-based)
 // ─────────────────────────────────────────
 
-function applyFilters() {
-  const urgency = document.getElementById("filterUrgency").value;
-  const intent  = document.getElementById("filterIntent").value;
-  const status  = document.getElementById("filterStatus").value;
-  loadReports(urgency, intent, status);
-}
+function setFilter(el, type, val) {
+  // Deactivate all pills of same type
+  document.querySelectorAll(`.pill[data-type="${type}"]`).forEach(p => {
+    p.classList.remove("active");
+  });
+  el.classList.add("active");
 
-function clearFilters() {
-  document.getElementById("filterUrgency").value = "";
-  document.getElementById("filterIntent").value  = "";
-  document.getElementById("filterStatus").value  = "";
+  filters[type] = val;
   loadReports();
 }
 
 // ─────────────────────────────────────────
-// MODAL
+// MODAL — OPEN
 // ─────────────────────────────────────────
 
 async function openModal(reportId) {
   currentReportId = reportId;
+  selectedStatus  = null;
 
   try {
     const res  = await fetch(`${API}/reports/${reportId}`);
     const data = await res.json();
     const r    = data.triage_report;
 
-    // Metadata
+    // Topbar
     document.getElementById("modalReportId").textContent  = r.metadata.report_id;
     document.getElementById("modalTimestamp").textContent = r.metadata.timestamp;
 
@@ -149,56 +152,88 @@ async function openModal(reportId) {
 
     // Classification
     const uTag = document.getElementById("modalUrgency");
-    uTag.textContent = urgencyEmoji(r.classification.urgency) + " " +
-                       r.classification.urgency.toUpperCase();
-    uTag.className   = `tag tag-${r.classification.urgency}`;
+    uTag.textContent = urgencyEmoji(r.classification.urgency) + "  " + r.classification.urgency.toUpperCase();
+    uTag.className   = `urgency-tag u-${r.classification.urgency}`;
 
     const iTag = document.getElementById("modalIntent");
-    iTag.textContent = intentEmoji(r.classification.intent) + " " +
-                       r.classification.intent.toUpperCase();
-    iTag.className   = `tag tag-${r.classification.intent}`;
+    iTag.textContent = intentEmoji(r.classification.intent) + "  " + r.classification.intent.toUpperCase();
+    iTag.className   = `intent-tag i-${r.classification.intent}`;
+
+    // Routing
+    document.getElementById("modalRouting").textContent = r.routing.assigned_to;
+    document.getElementById("modalSla").textContent     = "⏱  " + r.routing.sla;
 
     // Entities
-    const labels = {
+    const entityLabels = {
       property_ids: "Property IDs", names: "Names",
       dates: "Dates", phone_numbers: "Phone Numbers",
       locations: "Locations", amounts: "Amounts",
     };
-
-    const tbody = document.querySelector("#modalEntityTable tbody");
-    tbody.innerHTML = "";
-    for (const [key, label] of Object.entries(labels)) {
-      const vals = r.entities[key];
-      const tr   = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${label}</td>
-        <td>${vals && vals.length ? vals.join(", ") : "—"}</td>`;
-      tbody.appendChild(tr);
+    const egrid = document.getElementById("modalEntitiesGrid");
+    egrid.innerHTML = "";
+    for (const [key, label] of Object.entries(entityLabels)) {
+      const vals     = r.entities[key];
+      const hasValue = vals && vals.length > 0;
+      const div      = document.createElement("div");
+      div.className  = `entity-item${hasValue ? " has-value" : ""}`;
+      div.innerHTML  = `
+        <div class="entity-label">${label}</div>
+        <div class="entity-value ${hasValue ? "" : "empty"}">
+          ${hasValue ? vals.join(", ") : "—"}
+        </div>`;
+      egrid.appendChild(div);
     }
-
-    // Routing & SLA
-    document.getElementById("modalRouting").textContent = r.routing.assigned_to;
-    document.getElementById("modalSla").textContent     = "⏱️ SLA: " + r.routing.sla;
 
     // Draft
     document.getElementById("modalDraft").textContent = r.draft_response;
+    document.getElementById("modalCopyBtn").textContent = "⊕ Copy";
 
-    // Status dropdown
-    document.getElementById("modalStatusSelect").value = r.metadata.status;
-    document.getElementById("statusUpdateMsg").classList.add("hidden");
+    // Status pills — pre-select current
+    document.querySelectorAll(".status-pill").forEach(p => {
+      p.classList.toggle("selected", p.dataset.val === r.metadata.status);
+    });
+    selectedStatus = r.metadata.status;
 
-    // Show modal
+    document.getElementById("statusMsg").classList.add("hidden");
+
+    // Show
     document.getElementById("modalOverlay").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
 
   } catch (err) {
-    console.error("Could not load report detail", err);
+    console.error("Modal load failed", err);
   }
 }
 
-function closeModal(event) {
-  if (event && event.target !== document.getElementById("modalOverlay")) return;
+// ─────────────────────────────────────────
+// MODAL — CLOSE
+// ─────────────────────────────────────────
+
+function closeModal() {
   document.getElementById("modalOverlay").classList.add("hidden");
+  document.body.style.overflow = "";
   currentReportId = null;
+}
+
+// Click outside to close
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("modalOverlay").addEventListener("click", e => {
+    if (e.target === document.getElementById("modalOverlay")) closeModal();
+  });
+  // ESC key
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeModal();
+  });
+});
+
+// ─────────────────────────────────────────
+// STATUS PILLS SELECT
+// ─────────────────────────────────────────
+
+function selectStatus(el) {
+  document.querySelectorAll(".status-pill").forEach(p => p.classList.remove("selected"));
+  el.classList.add("selected");
+  selectedStatus = el.dataset.val;
 }
 
 // ─────────────────────────────────────────
@@ -206,28 +241,22 @@ function closeModal(event) {
 // ─────────────────────────────────────────
 
 async function updateStatus() {
-  if (!currentReportId) return;
-
-  const newStatus = document.getElementById("modalStatusSelect").value;
+  if (!currentReportId || !selectedStatus) return;
 
   try {
     const res = await fetch(`${API}/reports/${currentReportId}/status`, {
-      method: "PATCH",
+      method:  "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
+      body:    JSON.stringify({ status: selectedStatus }),
     });
 
     if (res.ok) {
-      const msg = document.getElementById("statusUpdateMsg");
-      msg.textContent = `✅ Status updated to "${newStatus}"`;
+      const msg = document.getElementById("statusMsg");
+      msg.textContent = `✓ Status updated to "${selectedStatus.replace("_", " ")}"`;
       msg.classList.remove("hidden");
 
-      // Refresh table and stats in background
-      loadReports(
-        document.getElementById("filterUrgency").value,
-        document.getElementById("filterIntent").value,
-        document.getElementById("filterStatus").value
-      );
+      // Refresh table + stats silently
+      loadReports();
       loadStats();
     }
   } catch {
@@ -242,9 +271,9 @@ async function updateStatus() {
 function copyModalDraft() {
   const text = document.getElementById("modalDraft").textContent;
   navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector(".copy-btn");
-    btn.textContent = "✅ Copied!";
-    setTimeout(() => btn.textContent = "📋 Copy Draft", 2000);
+    const btn = document.getElementById("modalCopyBtn");
+    btn.textContent = "✓ Copied";
+    setTimeout(() => btn.textContent = "⊕ Copy", 2000);
   });
 }
 
@@ -252,15 +281,13 @@ function copyModalDraft() {
 // HELPERS
 // ─────────────────────────────────────────
 
-function urgencyEmoji(u) {
-  return { urgent: "🔴", medium: "🟠", low: "🟢" }[u] || "⚪";
-}
+function urgencyEmoji(u) { return { urgent: "🔴", medium: "🟠", low: "🟢" }[u] || "⚪"; }
+function intentEmoji(i)  { return { complaint: "😤", query: "❓", booking: "📅" }[i] || "📌"; }
 
-function intentEmoji(i) {
-  return { complaint: "😤", query: "❓", booking: "📅" }[i] || "📌";
+function statusClass(s) {
+  return { pending_review: "sb-pending", escalated: "sb-escalated", resolved: "sb-resolved" }[s] || "sb-pending";
 }
 
 function statusLabel(s) {
-  return { pending_review: "🕐 Pending", escalated: "🔺 Escalated",
-           resolved: "✅ Resolved" }[s] || s;
+  return { pending_review: "🕐 Pending", escalated: "🔺 Escalated", resolved: "✅ Resolved" }[s] || s;
 }

@@ -3,185 +3,228 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Triage Dashboard</title>
+  <title>RE·TRIAGE — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="dashboard.css" />
 </head>
 <body>
 
-  <div class="container">
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
 
-    <!-- Header -->
-    <header>
-      <div class="logo">📊</div>
-      <h1>Triage <span>Dashboard</span></h1>
-      <p class="subtitle">All incoming support reports — filter, review, resolve</p>
-      <a href="index.html" class="nav-link">← Back to Triage Agent</a>
-    </header>
+  <div class="layout">
 
-    <!-- Stats Row -->
-    <section class="stats-row" id="statsRow">
-      <div class="stat-card" id="statTotal">
-        <span class="stat-number">—</span>
-        <span class="stat-label">Total Reports</span>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">⬡</div>
+        <div class="brand-text">
+          <span class="brand-name">RE·TRIAGE</span>
+          <span class="brand-sub">AI Support Agent</span>
+        </div>
       </div>
-      <div class="stat-card urgent">
-        <span class="stat-number" id="statUrgent">—</span>
-        <span class="stat-label">Urgent</span>
-      </div>
-      <div class="stat-card medium">
-        <span class="stat-number" id="statMedium">—</span>
-        <span class="stat-label">Medium</span>
-      </div>
-      <div class="stat-card low">
-        <span class="stat-number" id="statLow">—</span>
-        <span class="stat-label">Low</span>
-      </div>
-      <div class="stat-card pending">
-        <span class="stat-number" id="statPending">—</span>
-        <span class="stat-label">Pending Review</span>
-      </div>
-      <div class="stat-card resolved">
-        <span class="stat-number" id="statResolved">—</span>
-        <span class="stat-label">Resolved</span>
-      </div>
-    </section>
 
-    <!-- Filters -->
-    <section class="filters-bar">
-      <div class="filter-group">
-        <label>Urgency</label>
-        <select id="filterUrgency" onchange="applyFilters()">
-          <option value="">All</option>
-          <option value="urgent">🔴 Urgent</option>
-          <option value="medium">🟠 Medium</option>
-          <option value="low">🟢 Low</option>
-        </select>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="nav-item">
+          <span class="nav-icon">◈</span>
+          <span>Triage</span>
+        </a>
+        <a href="dashboard.html" class="nav-item active">
+          <span class="nav-icon">▦</span>
+          <span>Dashboard</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="system-status">
+          <span class="pulse-dot"></span>
+          <span>System Online</span>
+        </div>
+        <div class="model-tag">llama-3.3-70b</div>
       </div>
-      <div class="filter-group">
-        <label>Intent</label>
-        <select id="filterIntent" onchange="applyFilters()">
-          <option value="">All</option>
-          <option value="complaint">😤 Complaint</option>
-          <option value="query">❓ Query</option>
-          <option value="booking">📅 Booking</option>
-        </select>
+    </aside>
+
+    <!-- Main -->
+    <main class="main dash-main">
+
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 class="page-title">Reports Dashboard</h1>
+          <p class="page-sub">Filter, review and resolve all incoming triage reports</p>
+        </div>
+        <div class="topbar-right">
+          <button class="ghost-btn refresh-btn" onclick="loadDashboard()">
+            <span id="refreshIcon">↻</span> Refresh
+          </button>
+        </div>
+      </header>
+
+      <!-- Stats Strip -->
+      <section class="stats-strip">
+        <div class="stat-tile total">
+          <span class="stat-val" id="statTotal">—</span>
+          <span class="stat-key">Total</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-tile">
+          <span class="stat-val red" id="statUrgent">—</span>
+          <span class="stat-key">Urgent</span>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-val orange" id="statMedium">—</span>
+          <span class="stat-key">Medium</span>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-val green" id="statLow">—</span>
+          <span class="stat-key">Low</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-tile">
+          <span class="stat-val blue" id="statPending">—</span>
+          <span class="stat-key">Pending</span>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-val red" id="statEscalated">—</span>
+          <span class="stat-key">Escalated</span>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-val teal" id="statResolved">—</span>
+          <span class="stat-key">Resolved</span>
+        </div>
+      </section>
+
+      <!-- Filter Bar -->
+      <section class="filter-bar">
+        <div class="filter-pills" id="filterPills">
+          <button class="pill active" data-type="urgency" data-val="" onclick="setFilter(this,'urgency','')">All</button>
+          <button class="pill urgent" data-type="urgency" data-val="urgent" onclick="setFilter(this,'urgency','urgent')">🔴 Urgent</button>
+          <button class="pill medium" data-type="urgency" data-val="medium" onclick="setFilter(this,'urgency','medium')">🟠 Medium</button>
+          <button class="pill low"    data-type="urgency" data-val="low"    onclick="setFilter(this,'urgency','low')">🟢 Low</button>
+
+          <div class="pill-sep"></div>
+
+          <button class="pill active" data-type="intent" data-val="" onclick="setFilter(this,'intent','')">All</button>
+          <button class="pill" data-type="intent" data-val="complaint" onclick="setFilter(this,'intent','complaint')">😤 Complaint</button>
+          <button class="pill" data-type="intent" data-val="query"     onclick="setFilter(this,'intent','query')">❓ Query</button>
+          <button class="pill" data-type="intent" data-val="booking"   onclick="setFilter(this,'intent','booking')">📅 Booking</button>
+
+          <div class="pill-sep"></div>
+
+          <button class="pill active" data-type="status" data-val="" onclick="setFilter(this,'status','')">All</button>
+          <button class="pill" data-type="status" data-val="pending_review" onclick="setFilter(this,'status','pending_review')">🕐 Pending</button>
+          <button class="pill" data-type="status" data-val="escalated"      onclick="setFilter(this,'status','escalated')">🔺 Escalated</button>
+          <button class="pill" data-type="status" data-val="resolved"       onclick="setFilter(this,'status','resolved')">✅ Resolved</button>
+        </div>
+
+        <span class="results-count" id="resultsCount"></span>
+      </section>
+
+      <!-- Error -->
+      <div id="errorBox" class="error-box hidden"></div>
+
+      <!-- Table -->
+      <section class="table-section">
+        <table class="reports-table">
+          <thead>
+            <tr>
+              <th>Report ID</th>
+              <th>Time</th>
+              <th>Urgency</th>
+              <th>Intent</th>
+              <th>Preview</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="reportsBody">
+            <tr>
+              <td colspan="7" class="empty-row">
+                <span class="loading-spinner"></span>
+                Loading reports...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal" id="modalBox">
+
+      <div class="modal-topbar">
+        <div class="modal-title-row">
+          <span class="modal-eyebrow">Report Detail</span>
+          <div class="modal-badges">
+            <span id="modalReportId"  class="report-id-badge"></span>
+            <span id="modalTimestamp" class="report-id-badge" style="background:transparent;color:var(--text-muted);border-color:var(--border)"></span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal()">✕</button>
       </div>
-      <div class="filter-group">
-        <label>Status</label>
-        <select id="filterStatus" onchange="applyFilters()">
-          <option value="">All</option>
-          <option value="pending_review">🕐 Pending Review</option>
-          <option value="escalated">🔺 Escalated</option>
-          <option value="resolved">✅ Resolved</option>
-        </select>
-      </div>
-      <button class="clear-btn" onclick="clearFilters()">Clear Filters</button>
-      <button id="refreshBtn" onclick="loadDashboard()">🔄 Refresh</button>
-    </section>
 
-    <!-- Report Count -->
-    <div class="results-count" id="resultsCount"></div>
+      <div class="modal-body">
 
-    <!-- Error Box -->
-    <div id="errorBox" class="error-box hidden"></div>
+        <!-- Message -->
+        <div class="modal-section">
+          <div class="modal-section-label">Original Message</div>
+          <p id="modalMessage" class="modal-message-text"></p>
+        </div>
 
-    <!-- Reports Table -->
-    <section class="table-wrapper">
-      <table id="reportsTable">
-        <thead>
-          <tr>
-            <th>Report ID</th>
-            <th>Timestamp</th>
-            <th>Urgency</th>
-            <th>Intent</th>
-            <th>Preview</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="reportsBody">
-          <tr>
-            <td colspan="7" class="loading-row">Loading reports...</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <!-- Detail Modal -->
-    <div id="modalOverlay" class="modal-overlay hidden" onclick="closeModal(event)">
-      <div class="modal">
-        <button class="modal-close" onclick="closeModal()">✕</button>
-
-        <div class="modal-header">
-          <h2>📋 Report Detail</h2>
-          <div class="meta-row">
-            <span id="modalReportId"  class="badge badge-id"></span>
-            <span id="modalTimestamp" class="badge badge-time"></span>
+        <!-- Classification + Routing -->
+        <div class="modal-two-col">
+          <div class="modal-section">
+            <div class="modal-section-label">Classification</div>
+            <div class="modal-tags">
+              <span id="modalUrgency" class="urgency-tag"></span>
+              <span id="modalIntent"  class="intent-tag" style="margin-left:1rem"></span>
+            </div>
+          </div>
+          <div class="modal-section">
+            <div class="modal-section-label">Routing & SLA</div>
+            <p id="modalRouting" style="font-size:0.85rem;color:var(--text-primary);margin-bottom:0.4rem"></p>
+            <div class="sla-chip" id="modalSla"></div>
           </div>
         </div>
 
-        <div class="modal-body">
+        <!-- Entities -->
+        <div class="modal-section">
+          <div class="modal-section-label">Extracted Entities</div>
+          <div class="entities-grid" id="modalEntitiesGrid"></div>
+        </div>
 
-          <!-- Message -->
-          <div class="card">
-            <h3>📨 Original Message</h3>
-            <p id="modalMessage" class="modal-message"></p>
+        <!-- Draft -->
+        <div class="modal-section">
+          <div class="modal-section-label" style="display:flex;justify-content:space-between">
+            <span>Draft Response</span>
+            <button class="copy-btn" id="modalCopyBtn" onclick="copyModalDraft()">⊕ Copy</button>
           </div>
+          <div id="modalDraft" class="draft-content"></div>
+        </div>
 
-          <!-- Classification -->
-          <div class="card">
-            <h3>🏷️ Classification</h3>
-            <div class="tag-row">
-              <span id="modalUrgency" class="tag"></span>
-              <span id="modalIntent"  class="tag"></span>
+        <!-- Status Update -->
+        <div class="modal-section status-update-section">
+          <div class="modal-section-label">Update Status</div>
+          <div class="status-update-row">
+            <div class="status-pills-row" id="statusPillsRow">
+              <button class="status-pill" data-val="pending_review" onclick="selectStatus(this)">🕐 Pending Review</button>
+              <button class="status-pill" data-val="escalated"      onclick="selectStatus(this)">🔺 Escalated</button>
+              <button class="status-pill" data-val="resolved"       onclick="selectStatus(this)">✅ Resolved</button>
             </div>
-          </div>
-
-          <!-- Entities -->
-          <div class="card">
-            <h3>🔍 Extracted Entities</h3>
-            <table id="modalEntityTable">
-              <tbody></tbody>
-            </table>
-          </div>
-
-          <!-- Routing -->
-          <div class="card">
-            <h3>📡 Routing & SLA</h3>
-            <p id="modalRouting" class="routing-text"></p>
-            <p id="modalSla"     class="sla-text"></p>
-          </div>
-
-          <!-- Draft -->
-          <div class="card">
-            <h3>✉️ Draft Response</h3>
-            <div id="modalDraft" class="draft-box"></div>
-            <button class="copy-btn" onclick="copyModalDraft()">
-              📋 Copy Draft
+            <button class="primary-btn update-status-btn" onclick="updateStatus()">
+              Save Status
             </button>
           </div>
-
-          <!-- Status Update -->
-          <div class="card status-card">
-            <h3>🔄 Update Status</h3>
-            <div class="status-row">
-              <select id="modalStatusSelect">
-                <option value="pending_review">🕐 Pending Review</option>
-                <option value="escalated">🔺 Escalated</option>
-                <option value="resolved">✅ Resolved</option>
-              </select>
-              <button class="update-btn" onclick="updateStatus()">
-                Update
-              </button>
-            </div>
-            <p id="statusUpdateMsg" class="status-update-msg hidden"></p>
-          </div>
-
+          <p id="statusMsg" class="status-msg hidden"></p>
         </div>
+
       </div>
     </div>
-
   </div>
 
   <script src="dashboard.js"></script>
